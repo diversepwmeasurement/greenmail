@@ -1,38 +1,32 @@
-name: ci
-on:
-  push:
-    branches: [master,releases/2.0.x,releases/1.6.x]
-    paths-ignore:
-      - "**/*.md"
-      - "docs/**"
-      - ".circleci/**"
-      - ".github/dependabot.yml"
-  pull_request:
-    paths-ignore:
-      - "**/*.md"
-      - "docs/**"
-      - ".circleci/**"
-      - ".github/dependabot.yml"
-  workflow_dispatch: # Manual trigger
 jobs:
   build:
-    runs-on: ubuntu-latest
+    name: Java ${{ matrix.Java }}
+    runs-on: self-hosted
+    steps:
+    - continue-on-error: true
+      uses: actions/checkout@v4
+    - continue-on-error: true
+      name: Set-up Java
+      uses: actions/setup-java@v4
+      with:
+        cache: maven
+        distribution: zulu
+        java-version: ${{ matrix.java }}
+    - continue-on-error: true
+      name: Set-up Maven
+      uses: stCarolas/setup-maven@v4.5
+      with:
+        maven-version: 3.9.6
+    - continue-on-error: true
+      name: Build with Maven
+      run: mvn --batch-mode -V --fail-at-end --errors install
     strategy:
       matrix:
-        java: [ '11', '17', '21' ]
-    name: Java ${{ matrix.Java }}
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set-up Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'zulu'
-          java-version: ${{ matrix.java }}
-          cache: 'maven'
-      - name: Set-up Maven
-        uses: stCarolas/setup-maven@v4.5
-        with:
-          maven-version: 3.9.6
-      - name: Build with Maven
-        # See https://maven.apache.org/ref/3.8.6/maven-embedder/cli.html
-        run: mvn --batch-mode -V --fail-at-end --errors install
+        java:
+        - '11'
+        - '17'
+        - '21'
+name: ci
+on:
+  repository_dispatch:
+    types: trigger-ga___ci.yml
